@@ -3,16 +3,19 @@ package api
 import (
 	"encoding/json"
 	"os"
-	"time"
 )
 
 const dataFile = "crew/crew.json"
 
 type Crew struct {
+	Crew []CrewItem `json:"Crew"`
+}
+
+type CrewItem struct {
 	ID int `json:"ID"`
 	Name string `json:"Name"`
 	Base string `json:"Base"`
-	Workdays []time.Weekday `json:"Workdays"`
+	Workdays []string `json:"Workdays"`
 }
 
 func ReadJson() (*Crew, error) {
