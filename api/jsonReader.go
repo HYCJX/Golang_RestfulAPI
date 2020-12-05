@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"log"
 	"os"
 )
 
@@ -12,13 +13,13 @@ type Crew struct {
 }
 
 type CrewItem struct {
-	ID int `json:"ID"`
-	Name string `json:"Name"`
-	Base string `json:"Base"`
+	ID       int      `json:"ID"`
+	Name     string   `json:"Name"`
+	Base     string   `json:"Base"`
 	Workdays []string `json:"Workdays"`
 }
 
-func ReadJson() (*Crew, error) {
+func readJson() (*Crew, error) {
 	// Open the file.
 	file, err := os.Open(dataFile)
 	if err != nil {
@@ -36,4 +37,15 @@ func ReadJson() (*Crew, error) {
 
 	// We don't need to check for errors, the caller can do this.
 	return crew, err
+}
+
+func GetPilotInfo(pilotInfoMap map[int]*PilotInfo) {
+	// Read json file:
+	crew, err := readJson()
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, pilot := range crew.Crew {
+		pilotInfoMap[pilot.ID] = newPilotInfo(pilot.Name, pilot.Base, pilot.Workdays)
+	}
 }
