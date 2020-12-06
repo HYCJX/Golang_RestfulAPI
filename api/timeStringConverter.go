@@ -19,3 +19,8 @@ func stringToWeekday(weekdays []string) ([]time.Weekday, error) {
 	}
 	return timeWeekdays, err
 }
+
+func stringToTime(timeString string) (time.Time, error) {
+	layout := "2006-01-02T15:04:05Z"
+	return time.Parse(layout, timeString)
+}

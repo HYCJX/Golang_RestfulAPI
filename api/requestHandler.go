@@ -31,7 +31,7 @@ func init() {
 }
 
 type PilotInfo struct {
-	ID       int         `json:"ID"`
+	ID       int            `json:"ID"`
 	Name     string         `json:"Name"`
 	Base     string         `json:"Base"`
 	Workdays []time.Weekday `json:"Workdays"`
@@ -39,13 +39,13 @@ type PilotInfo struct {
 }
 
 type Flight struct {
-	DepDateTime time.Time `json:"DepDateTime"`
+	DepDateTime    time.Time `json:"DepDateTime"`
 	ReturnDateTime time.Time `json:"ReturnDateTime"`
 }
 
 type FlightRequest struct {
-	PilotID        int       `json:"pilotID"`
-	DepDateTime string `json:"depDateTime"`
+	PilotID        int    `json:"pilotID"`
+	DepDateTime    string `json:"depDateTime"`
 	ReturnDateTime string `json:"returnDateTime"`
 }
 
@@ -70,7 +70,7 @@ func GetPilotHandler(w http.ResponseWriter, r *http.Request) {
 func GetPilotsHandler(w http.ResponseWriter, r *http.Request) {
 	pilotNum := len(pilotInfoMap)
 	pilotInfos := make([]PilotInfo, 0, pilotNum)
-	for i := 1; i <=  pilotNum; i++ {
+	for i := 1; i <= pilotNum; i++ {
 		pilotInfos = append(pilotInfos, *pilotInfoMap[i])
 	}
 	json.NewEncoder(w).Encode(pilotInfos)
@@ -79,9 +79,15 @@ func GetPilotsHandler(w http.ResponseWriter, r *http.Request) {
 func GetAvailabilityHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	location := vars["location"]
-	depDateTime := vars["depDateTime"]
-	returnDateTime := vars["returnDateTime"]
-	fmt.Println(location + depDateTime + returnDateTime)
+	depDateTime, err1 := stringToTime(vars["depDateTime"])
+	if err1 != nil {
+		log.Fatal(err1)
+	}
+	returnDateTime, err2 := stringToTime(vars["returnDateTime"])
+	if err2 != nil {
+		log.Fatal(err2)
+	}
+	fmt.Println(location + depDateTime.String() + returnDateTime.String())
 }
 
 func PostFlightHandler(w http.ResponseWriter, r *http.Request) {
@@ -91,5 +97,14 @@ func PostFlightHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	fmt.Println(flightRequest)
+	pilotId := flightRequest.PilotID
+	depDateTime, err1 := stringToTime(flightRequest.DepDateTime)
+	if err1 != nil {
+		log.Fatal(err1)
+	}
+	returnDateTime, err2 := stringToTime(flightRequest.ReturnDateTime)
+	if err2 != nil {
+		log.Fatal(err2)
+	}
+	fmt.Println(strconv.Itoa(pilotId) + depDateTime.String() + returnDateTime.String())
 }
