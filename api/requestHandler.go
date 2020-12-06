@@ -26,7 +26,6 @@ func init() {
 	}
 	// Fill in pilots-info:
 	for _, pilot := range crew.Crew {
-		fmt.Println(pilot.ID)
 		pilotInfoMap[pilot.ID] = NewPilotInfo(pilot.ID, pilot.Name, pilot.Base, pilot.Workdays)
 	}
 }
@@ -40,8 +39,14 @@ type PilotInfo struct {
 }
 
 type Flight struct {
-	DepartDateTime time.Time `json:"DepartDateTime"`
-	ReturnDataTime time.Time `json:"ReturnDataTime"`
+	DepDateTime time.Time `json:"DepDateTime"`
+	ReturnDateTime time.Time `json:"ReturnDateTime"`
+}
+
+type FlightRequest struct {
+	PilotID        int       `json:"pilotID"`
+	DepDateTime string `json:"depDateTime"`
+	ReturnDateTime string `json:"returnDateTime"`
 }
 
 func NewPilotInfo(id int, name string, base string, workdays []string) *PilotInfo {
@@ -69,4 +74,22 @@ func GetPilotsHandler(w http.ResponseWriter, r *http.Request) {
 		pilotInfos = append(pilotInfos, *pilotInfoMap[i])
 	}
 	json.NewEncoder(w).Encode(pilotInfos)
+}
+
+func GetAvailabilityHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	location := vars["location"]
+	depDateTime := vars["depDateTime"]
+	returnDateTime := vars["returnDateTime"]
+	fmt.Println(location + depDateTime + returnDateTime)
+}
+
+func PostFlightHandler(w http.ResponseWriter, r *http.Request) {
+	var flightRequest FlightRequest
+	err := json.NewDecoder(r.Body).Decode(&flightRequest)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	fmt.Println(flightRequest)
 }
