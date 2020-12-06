@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/HYCJX/Golang_RestfulAPI/api"
+	"github.com/HYCJX/Golang_RestfulAPI/controller"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -9,11 +9,11 @@ import (
 
 func main() {
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/pilots/{id:[0-9]+}", api.GetPilotHandler).Methods("GET")
-	router.HandleFunc("/pilots/availability", api.GetAvailabilityHandler).
+	router.HandleFunc("/pilots/{id:[0-9]+}", controller.GetPilotHandler).Methods("GET")
+	router.HandleFunc("/pilots/availability", controller.GetAvailabilityHandler).
 		Queries("location", "{location}", "depDateTime", "{depDateTime}", "returnDateTime", "{returnDateTime}").
 		Methods("GET")
-	router.HandleFunc("/pilots", api.GetPilotsHandler).Methods("GET")
-	router.HandleFunc("/flights", api.PostFlightHandler).Methods("POST")
+	router.HandleFunc("/pilots", controller.GetPilotsHandler).Methods("GET")
+	router.HandleFunc("/flights", controller.PostFlightHandler).Methods("POST")
 	log.Fatal(http.ListenAndServe(":8080", router))
 }

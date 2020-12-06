@@ -1,4 +1,4 @@
-package api
+package utils
 
 import (
 	"fmt"
@@ -7,7 +7,16 @@ import (
 
 var daysOfWeek = make(map[string]time.Weekday, 0)
 
-func stringToWeekday(weekdays []string) ([]time.Weekday, error) {
+func init() {
+	// Initialise daysOfWeek map:
+	for d := time.Sunday; d <= time.Saturday; d++ {
+		name := d.String()
+		daysOfWeek[name] = d
+		daysOfWeek[name[:3]] = d
+	}
+}
+
+func StringToWeekday(weekdays []string) ([]time.Weekday, error) {
 	var err error
 	timeWeekdays := make([]time.Weekday, 0)
 	for _, weekday := range weekdays {
@@ -20,7 +29,7 @@ func stringToWeekday(weekdays []string) ([]time.Weekday, error) {
 	return timeWeekdays, err
 }
 
-func stringToTime(timeString string) (time.Time, error) {
+func StringToTime(timeString string) (time.Time, error) {
 	layout := "2006-01-02T15:04:05Z"
 	return time.Parse(layout, timeString)
 }
