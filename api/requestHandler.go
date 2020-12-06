@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -40,12 +41,26 @@ func NewPilotInfo(id int, name string, base string, workdays []string) *PilotInf
 }
 
 func GetPilotHandler(w http.ResponseWriter, r *http.Request) {
-	//id := mux.Vars(r)["id"]
-	//idNum, err := strconv.Atoi(id)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//json.NewEncoder(w).Encode(pilotInfoMap[idNum])
+	id := mux.Vars(r)["id"]
+	idNum, err := strconv.Atoi(id)
+	if err != nil {
+		log.Fatal(err)
+	}
+	database, _ := sql.Open("sqlite3", "./pilotInfo.db")
+	statement, _ := database.Prepare("SELECT * FROM pilots WHERE id = $1")
+	rows, err := statement.Query(idNum)
+	var pilotInfos []PilotInfo
+	for rows.Next() {
+		var pilotInfo PilotInfo
+		var encodedWeekdays int
+		err := rows.Scan(&pilotInfo.ID, &pilotInfo.Name, &pilotInfo.Base, &encodedWeekdays) // scan contents of the current row into the instance
+		if err != nil {
+			log.Fatal(err)
+		}
+		pilotInfo.Workdays = decodeWeekdays(encodedWeekdays)
+		pilotInfos = append(pilotInfos, pilotInfo)
+	}
+
 }
 
 func GetPilotsHandler(w http.ResponseWriter, r *http.Request) {

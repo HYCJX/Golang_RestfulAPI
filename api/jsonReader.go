@@ -19,6 +19,15 @@ var weekdayBitmap = map[time.Weekday]int {
 	time.Friday : 6,
 	time.Saturday: 7,
 }
+var weekdayDic = []time.Weekday {
+	time.Sunday,
+	time.Monday,
+	time.Tuesday,
+	time.Wednesday,
+	time.Thursday,
+	time.Friday,
+	time.Saturday,
+}
 
 func init() {
 	// Initialise time-string converter:
@@ -75,4 +84,14 @@ func encodeWeekdays(weekdays []time.Weekday) int {
 		encodedWeekdays += int(math.Pow(2, float64(weekdayBitmap[weekday])))
 	}
 	return encodedWeekdays
+}
+
+func decodeWeekdays(encodedWeekdays int) []time.Weekday {
+	weekdays := make([]time.Weekday, 0)
+	for _, weekday := range weekdayDic {
+		if encodedWeekdays & int(math.Pow(2, float64(weekdayBitmap[weekday]))) == 0 {
+			weekdays = append(weekdays, weekday)
+		}
+	}
+	return weekdays
 }
