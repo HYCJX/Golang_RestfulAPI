@@ -1,9 +1,11 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"net/http"
 	"strconv"
@@ -28,6 +30,9 @@ func init() {
 	for _, pilot := range crew.Crew {
 		pilotInfoMap[pilot.ID] = NewPilotInfo(pilot.ID, pilot.Name, pilot.Base, pilot.Workdays)
 	}
+	database, _ := sql.Open("sqlite3", "./pilotInfo.db")
+	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS people (id INTEGER PRIMARY KEY, firstName TEXT)")
+	statement.Exec()
 }
 
 type PilotInfo struct {
