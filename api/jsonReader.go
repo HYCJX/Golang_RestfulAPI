@@ -10,16 +10,17 @@ import (
 )
 
 const dataFile = "crew/crew.json"
-var weekdayBitmap = map[time.Weekday]int {
-	time.Sunday: 1,
-	time.Monday: 2,
-	time.Tuesday: 3,
+
+var weekdayBitmap = map[time.Weekday]int{
+	time.Sunday:    1,
+	time.Monday:    2,
+	time.Tuesday:   3,
 	time.Wednesday: 4,
-	time.Thursday : 5,
-	time.Friday : 6,
-	time.Saturday: 7,
+	time.Thursday:  5,
+	time.Friday:    6,
+	time.Saturday:  7,
 }
-var weekdayDic = []time.Weekday {
+var weekdayDic = []time.Weekday{
 	time.Sunday,
 	time.Monday,
 	time.Tuesday,
@@ -43,6 +44,7 @@ func init() {
 	}
 	// Insert into databse:
 	database, _ := sql.Open("sqlite3", "./pilotInfo.db")
+	defer database.Close()
 	statement, _ := database.Prepare("CREATE TABLE IF Not EXISTS pilots (id INTEGER PRIMARY KEY, name TEXT NOT NULL, base TEXT NOT NULL, workdays SMALLINT ); CREATE TABLE flights (id INTEGER PRIMARY KEY, pilotID INTEGER FOREIGN KEY REFERENCES pilots (id) ON DELETE CASCADE , depDateTime TEXT, returnDateTime TEXT)")
 	statement.Exec()
 	statement, _ = database.Prepare("INSERT INTO pilots (id, name, base, workdays) VALUES (?,?,?,?)")
@@ -53,7 +55,6 @@ func init() {
 		}
 		statement.Exec(pilot.ID, pilot.Name, pilot.Base, encodeWeekdays(timeWeekDays))
 	}
-	database.Close()
 }
 
 type Crew struct {
@@ -86,11 +87,11 @@ func encodeWeekdays(weekdays []time.Weekday) int {
 	return encodedWeekdays
 }
 
-func decodeWeekdays(encodedWeekdays int) []time.Weekday {
-	weekdays := make([]time.Weekday, 0)
+func decodeWeekdays(encodedWeekdays int) []string {
+	weekdays := make([]string, 0)
 	for _, weekday := range weekdayDic {
-		if encodedWeekdays & int(math.Pow(2, float64(weekdayBitmap[weekday]))) == 0 {
-			weekdays = append(weekdays, weekday)
+		if encodedWeekdays&int(math.Pow(2, float64(weekdayBitmap[weekday]))) == 0 {
+			weekdays = append(weekdays, weekday.String())
 		}
 	}
 	return weekdays

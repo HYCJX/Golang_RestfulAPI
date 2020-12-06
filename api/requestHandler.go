@@ -13,11 +13,11 @@ import (
 )
 
 type PilotInfo struct {
-	ID       int            `json:"ID"`
-	Name     string         `json:"Name"`
-	Base     string         `json:"Base"`
-	Workdays []time.Weekday `json:"Workdays"`
-	Flights  []Flight       `json:"Flights"`
+	ID       int      `json:"ID"`
+	Name     string   `json:"Name"`
+	Base     string   `json:"Base"`
+	Workdays []string `json:"Workdays"`
+	Flights  []Flight `json:"Flights"`
 }
 
 type Flight struct {
@@ -31,15 +31,6 @@ type FlightRequest struct {
 	ReturnDateTime string `json:"returnDateTime"`
 }
 
-func NewPilotInfo(id int, name string, base string, workdays []string) *PilotInfo {
-	timeWeekdays, err := stringToWeekday(workdays)
-	if err != nil {
-		log.Fatal(err)
-	}
-	pilotInfo := PilotInfo{ID: id, Name: name, Base: base, Workdays: timeWeekdays, Flights: make([]Flight, 0)}
-	return &pilotInfo
-}
-
 func GetPilotHandler(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	idNum, err := strconv.Atoi(id)
@@ -47,9 +38,33 @@ func GetPilotHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 	database, _ := sql.Open("sqlite3", "./pilotInfo.db")
+	defer database.Close()
 	statement, _ := database.Prepare("SELECT * FROM pilots WHERE id = $1")
 	rows, err := statement.Query(idNum)
-	var pilotInfos []PilotInfo
+	if err != nil {
+		log.Fatal(err)
+	}
+	var pilotInfo PilotInfo
+	for rows.Next() {
+		var encodedWeekdays int
+		err := rows.Scan(&pilotInfo.ID, &pilotInfo.Name, &pilotInfo.Base, &encodedWeekdays) // scan contents of the current row into the instance
+		if err != nil {
+			log.Fatal(err)
+		}
+		pilotInfo.Workdays = decodeWeekdays(encodedWeekdays)
+	}
+	json.NewEncoder(w).Encode(pilotInfo)
+}
+
+func GetPilotsHandler(w http.ResponseWriter, r *http.Request) {
+	database, _ := sql.Open("sqlite3", "./pilotInfo.db")
+	defer database.Close()
+	statement, _ := database.Prepare("SELECT * FROM pilots")
+	rows, err := statement.Query()
+	if err != nil {
+		log.Fatal(err)
+	}
+	pilotInfos := make([]PilotInfo, 0)
 	for rows.Next() {
 		var pilotInfo PilotInfo
 		var encodedWeekdays int
@@ -60,16 +75,7 @@ func GetPilotHandler(w http.ResponseWriter, r *http.Request) {
 		pilotInfo.Workdays = decodeWeekdays(encodedWeekdays)
 		pilotInfos = append(pilotInfos, pilotInfo)
 	}
-
-}
-
-func GetPilotsHandler(w http.ResponseWriter, r *http.Request) {
-	//pilotNum := len(pilotInfoMap)
-	//pilotInfos := make([]PilotInfo, 0, pilotNum)
-	//for i := 1; i <= pilotNum; i++ {
-	//	pilotInfos = append(pilotInfos, *pilotInfoMap[i])
-	//}
-	//json.NewEncoder(w).Encode(pilotInfos)
+	json.NewEncoder(w).Encode(pilotInfos)
 }
 
 func GetAvailabilityHandler(w http.ResponseWriter, r *http.Request) {
