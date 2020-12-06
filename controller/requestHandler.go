@@ -35,15 +35,11 @@ func GetPilotsHandler(w http.ResponseWriter, r *http.Request) {
 func GetAvailabilityHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	location := vars["location"]
-	depDateTime, err1 := utils.StringToTime(vars["depDateTime"])
-	if err1 != nil {
-		log.Fatal(err1)
-	}
-	returnDateTime, err2 := utils.StringToTime(vars["returnDateTime"])
-	if err2 != nil {
-		log.Fatal(err2)
-	}
-	fmt.Println(location + depDateTime.String() + returnDateTime.String())
+	depDateTime := utils.FormatTimeString(vars["depDateTime"])
+
+	returnDateTime := utils.FormatTimeString(vars["returnDateTime"])
+
+	fmt.Println(location + depDateTime + returnDateTime)
 }
 
 func PostFlightHandler(w http.ResponseWriter, r *http.Request) {
@@ -54,14 +50,7 @@ func PostFlightHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pilotId := flightRequest.PilotID
-	depDateTime, err1 := utils.StringToTime(flightRequest.DepDateTime)
-	if err1 != nil {
-		log.Fatal(err1)
-	}
-	returnDateTime, err2 := utils.StringToTime(flightRequest.ReturnDateTime)
-	if err2 != nil {
-		log.Fatal(err2)
-	}
-
-	fmt.Println(strconv.Itoa(pilotId) + depDateTime.String() + returnDateTime.String())
+	depDateTime := utils.FormatTimeString(flightRequest.DepDateTime)
+	returnDateTime := utils.FormatTimeString(flightRequest.ReturnDateTime)
+	model.PostFlight(pilotId, depDateTime, returnDateTime)
 }

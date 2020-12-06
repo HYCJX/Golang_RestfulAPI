@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"log"
 	"time"
 )
 
@@ -29,7 +30,11 @@ func StringToWeekday(weekdays []string) ([]time.Weekday, error) {
 	return timeWeekdays, err
 }
 
-func StringToTime(timeString string) (time.Time, error) {
+func FormatTimeString(timeString string) (string) {
 	layout := "2006-01-02T15:04:05Z"
-	return time.Parse(layout, timeString)
+	dateTime, err := time.Parse(layout, timeString)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return dateTime.Format("2006-01-02T15:04:05Z07:00")
 }
