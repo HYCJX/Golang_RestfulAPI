@@ -2,12 +2,16 @@ package main
 
 import (
 	"github.com/HYCJX/Golang_RestfulAPI/controller"
+	"github.com/HYCJX/Golang_RestfulAPI/model"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+	"os"
 )
 
 func main() {
+	args := os.Args
+	model.InitDB(args[1])
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/pilots/availability", controller.GetAvailabilityHandler).
 		Queries("location", "{location}", "depDateTime", "{depDateTime}", "returnDateTime", "{returnDateTime}").

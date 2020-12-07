@@ -6,13 +6,13 @@ import (
 )
 
 var weekdayBitmap = map[time.Weekday]int{
-	time.Sunday:    1,
-	time.Monday:    2,
-	time.Tuesday:   3,
-	time.Wednesday: 4,
-	time.Thursday:  5,
-	time.Friday:    6,
-	time.Saturday:  7,
+	time.Sunday:    0,
+	time.Monday:    1,
+	time.Tuesday:   2,
+	time.Wednesday: 3,
+	time.Thursday:  4,
+	time.Friday:    5,
+	time.Saturday:  6,
 }
 var weekdayList = []time.Weekday{
 	time.Monday,
@@ -24,6 +24,8 @@ var weekdayList = []time.Weekday{
 	time.Sunday,
 }
 
+// Encode a slice of time.Weekday.
+// e.g. [Monday, Sunday] is encoded as binary [0,0,0,0,0,1,1], which is 3.
 func EncodeWeekdays(weekdays []time.Weekday) int {
 	encodedWeekdays := 0
 	for _, weekday := range weekdays {
@@ -32,6 +34,17 @@ func EncodeWeekdays(weekdays []time.Weekday) int {
 	return encodedWeekdays
 }
 
+// Encode one string representation of date-time
+func EncodeWeekday(dateTimeString string) (int, error) {
+	layout := "2006-01-02T15:04:05Z"
+	dateTime, err := time.Parse(layout, dateTimeString)
+	if err != nil {
+		return 0, err
+	}
+	return int(math.Pow(2, float64(weekdayBitmap[dateTime.Weekday()]))), err
+}
+
+// Decode from encoded int and convert to a slice of string representations of weekdays.
 func DecodeWeekdays(encodedWeekdays int) []string {
 	weekdays := make([]string, 0)
 	for _, weekday := range weekdayList {

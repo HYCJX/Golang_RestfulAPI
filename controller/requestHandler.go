@@ -1,3 +1,4 @@
+// Package controller contains functions that handles http requests by connecting to package model
 package controller
 
 import (
@@ -22,21 +23,45 @@ func GetPilotHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	pilotInfo := model.GetPilotInfo(idNum)
-	json.NewEncoder(w).Encode(pilotInfo)
+	pilotInfo, hasResult, err := model.GetPilotInfo(idNum)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Fatal(err)
+	}
+	if !hasResult {
+		w.WriteHeader(http.StatusBadRequest)
+	} else {
+		json.NewEncoder(w).Encode(pilotInfo)
+	}
 }
 
 func GetPilotsHandler(w http.ResponseWriter, r *http.Request) {
-	pilotsInfo := model.GetAllPilotsInfo()
+	pilotsInfo, err := model.GetAllPilotsInfo()
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Fatal(err)
+	}
 	json.NewEncoder(w).Encode(pilotsInfo)
 }
 
 func GetAvailabilityHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	location := vars["location"]
-	depDateTime := utils.FormatTimeString(vars["depDateTime"])
-	returnDateTime := utils.FormatTimeString(vars["returnDateTime"])
-	pilotIds := model.GetAvailablePilot(location, depDateTime, returnDateTime)
+	depDateTime, err := utils.FormatTimeString(vars["depDateTime"])
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Fatal(err)
+	}
+	returnDateTime, err := utils.FormatTimeString(vars["returnDateTime"])
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Fatal(err)
+	}
+	pilotIds, err := model.GetAvailablePilot(location, depDateTime, returnDateTime)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Fatal(err)
+	}
 	json.NewEncoder(w).Encode(pilotIds)
 }
 
@@ -46,12 +71,20 @@ func GetFlightHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	flightInfo := model.GetFlightInfo(idNum)
+	flightInfo, err := model.GetFlightInfo(idNum)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Fatal(err)
+	}
 	json.NewEncoder(w).Encode(flightInfo)
 }
 
 func GetFlightsHandler(w http.ResponseWriter, r *http.Request) {
-	flightsInfo := model.GetAllFlightsInfo()
+	flightsInfo, err := model.GetAllFlightsInfo()
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Fatal(err)
+	}
 	json.NewEncoder(w).Encode(flightsInfo)
 }
 
@@ -63,8 +96,20 @@ func PostFlightHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pilotId := flightRequest.PilotID
-	depDateTime := utils.FormatTimeString(flightRequest.DepDateTime)
-	returnDateTime := utils.FormatTimeString(flightRequest.ReturnDateTime)
-	flag := model.PostFlight(pilotId, depDateTime, returnDateTime)
+	depDateTime, err := utils.FormatTimeString(flightRequest.DepDateTime)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Fatal(err)
+	}
+	returnDateTime, err := utils.FormatTimeString(flightRequest.ReturnDateTime)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Fatal(err)
+	}
+	flag, err := model.PostFlight(pilotId, depDateTime, returnDateTime)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Fatal(err)
+	}
 	json.NewEncoder(w).Encode(flag)
 }
