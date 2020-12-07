@@ -21,6 +21,20 @@ type Flight struct {
 	ReturnDateTime string `json:"ReturnDateTime"`
 }
 
+type FlightInfo struct {
+	PilotID        int    `json:"PilotID"`
+	DepDateTime    string `json:"DepDateTime"`
+	ReturnDateTime string `json:"ReturnDateTime"`
+}
+
+type PilotIds struct {
+	PilotIDs []int `json:"PilotIDs"`
+}
+
+type RequestSuccessFlag struct {
+	Success bool `json:"Success"`
+}
+
 func NewFlight(depDateTime string, returnDateTime string) Flight {
 	return Flight{DepDateTime: depDateTime, ReturnDateTime: returnDateTime}
 }
@@ -55,8 +69,10 @@ func GetPilotInfo(id int) PilotInfo {
 	statement, _ := database.Prepare("SELECT * FROM pilots WHERE id = $1")
 	rows, err := statement.Query(id)
 	if err != nil {
+		fmt.Println("Here")
 		log.Fatal(err)
 	}
+
 	var pilotInfo PilotInfo
 	pilotInfo.Flights = make([]Flight, 0)
 	for rows.Next() {
@@ -69,12 +85,15 @@ func GetPilotInfo(id int) PilotInfo {
 	}
 	statement, _ = database.Prepare("SELECT * FROM flights WHERE pilotID = ?")
 	rows, err = statement.Query(id)
+	if (err != nil) {
+		log.Fatal(err)
+	}
 	for rows.Next() {
 		var rowID int
-		var pilotId int
+		var pilotID int
 		var depDateTime string
 		var returnDateTime string
-		err := rows.Scan(&rowID, &pilotId, &depDateTime, &returnDateTime)
+		err := rows.Scan(&rowID, &pilotID, &depDateTime, &returnDateTime)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -91,7 +110,7 @@ func GetAllPilotsInfo() []PilotInfo {
 	if err != nil {
 		log.Fatal(err)
 	}
-	pilotInfos := make([]PilotInfo, 0)
+	pilotsInfo := make([]PilotInfo, 0)
 	for rows.Next() {
 		var pilotInfo PilotInfo
 		pilotInfo.Flights = make([]Flight, 0)
@@ -102,39 +121,95 @@ func GetAllPilotsInfo() []PilotInfo {
 		}
 		pilotInfo.Workdays = utils.DecodeWeekdays(encodedWeekdays)
 		statement, _ = database.Prepare("SELECT * FROM flights WHERE pilotID = ?")
-		rows, err = statement.Query(pilotInfo.ID)
-		for rows.Next() {
+		innerRows, err := statement.Query(pilotInfo.ID)
+		for innerRows.Next() {
 			var id int
-			var pilotId int
+			var pilotID int
 			var depDateTime string
 			var returnDateTime string
-			err := rows.Scan(&id, &pilotId, &depDateTime, &returnDateTime)
+			err := innerRows.Scan(&id, &pilotID, &depDateTime, &returnDateTime)
 			if err != nil {
 				log.Fatal(err)
 			}
 			pilotInfo.Flights = append(pilotInfo.Flights, NewFlight(depDateTime, returnDateTime))
 		}
-		pilotInfos = append(pilotInfos, pilotInfo)
+		pilotsInfo = append(pilotsInfo, pilotInfo)
 	}
-	return pilotInfos
+	return pilotsInfo
 }
 
-func PostFlight(id int, depDateTime string, returnDateTime string) {
+func GetFlightInfo(id int) []FlightInfo {
 	database, _ := sql.Open("sqlite3", "./pilotInfo.db")
 	defer database.Close()
-	statement, _ := database.Prepare("INSERT INTO flights (pilotId, depDateTime, returnDateTime) VALUES (?,?,?)")
-	statement.Exec(id, depDateTime, returnDateTime)
-	statement, _ = database.Prepare("SELECT * FROM flights WHERE depDateTime > ?")
-	rows, _ := statement.Query("2025-08-01T10:00:00Z")
+	statement, _ := database.Prepare("SELECT * FROM flights WHERE pilotID = $1")
+	rows, err := statement.Query(id)
+	if err != nil {
+		log.Fatal(err)
+	}
+	flightInfoList := make([]FlightInfo, 0)
 	for rows.Next() {
-		var id int
-		var pilotId int
-		var depDateTime string
-		var returnDateTime string
-		err := rows.Scan(&id, &pilotId, &depDateTime, &returnDateTime)
+		var flightInfo FlightInfo
+		var rowID int
+		err := rows.Scan(&rowID, &flightInfo.PilotID, &flightInfo.DepDateTime, &flightInfo.ReturnDateTime) // scan contents of the current row into the instance
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println(depDateTime)
+		flightInfoList = append(flightInfoList, flightInfo)
 	}
+	return flightInfoList
+}
+
+func GetAllFlightsInfo() []FlightInfo {
+	database, _ := sql.Open("sqlite3", "./pilotInfo.db")
+	defer database.Close()
+	statement, _ := database.Prepare("SELECT * FROM pilots")
+	rows, err := statement.Query()
+	if err != nil {
+		log.Fatal(err)
+	}
+	flightsInfo := make([]FlightInfo, 0)
+	for rows.Next() {
+		var flightInfo FlightInfo
+		var rowID int
+		err := rows.Scan(&rowID, &flightInfo.PilotID, &flightInfo.DepDateTime, &flightInfo.ReturnDateTime) // scan contents of the current row into the instance
+		if err != nil {
+			log.Fatal(err)
+		}
+		flightsInfo = append(flightsInfo, flightInfo)
+	}
+	return flightsInfo
+}
+
+func GetAvailablePilot(location string, depDateTime string, returnDateTime string) PilotIds {
+	database, _ := sql.Open("sqlite3", "./pilotInfo.db")
+	defer database.Close()
+	var pilotIDs PilotIds
+	statement, _ := database.Prepare("SELECT id FROM pilots p_out WHERE base = ? AND NOT EXISTS (SELECT p.id, depDateTime, returnDateTime FROM pilots p JOIN flights f on p.id = f.pilotID WHERE p.id = p_out.id AND (depDateTime <= ? AND returnDateTime > ? OR depDateTime > ? and depDateTime < ?))")
+	rows, err := statement.Query(location, depDateTime, depDateTime, depDateTime, returnDateTime)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for rows.Next() {
+		var id int
+		err := rows.Scan(&id)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pilotIDs.PilotIDs = append(pilotIDs.PilotIDs, id)
+	}
+	return pilotIDs
+}
+
+func PostFlight(id int, depDateTime string, returnDateTime string) RequestSuccessFlag {
+	database, _ := sql.Open("sqlite3", "./pilotInfo.db")
+	defer database.Close()
+	statement, _ := database.Prepare("INSERT INTO flights (pilotId, depDateTime, returnDateTime) SELECT ?, ?, ? WHERE NOT EXISTS (SELECT * from flights WHERE pilotID = ? AND (depDateTime <= ? AND returnDateTime > ? OR depDateTime > ? and depDateTime < ?))")
+	rows, err := statement.Exec(id, depDateTime, returnDateTime, id, depDateTime, depDateTime, depDateTime, returnDateTime)
+	if err != nil {
+		log.Fatal(err)
+	}
+	count, _ := rows.RowsAffected()
+	var requestSuccessFlag RequestSuccessFlag
+	requestSuccessFlag.Success = count != 0
+	return requestSuccessFlag
 }

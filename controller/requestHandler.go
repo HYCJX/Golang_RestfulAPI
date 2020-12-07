@@ -2,7 +2,6 @@ package controller
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/HYCJX/Golang_RestfulAPI/model"
 	"github.com/HYCJX/Golang_RestfulAPI/utils"
 	"github.com/gorilla/mux"
@@ -28,18 +27,32 @@ func GetPilotHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetPilotsHandler(w http.ResponseWriter, r *http.Request) {
-	pilotInfos := model.GetAllPilotsInfo()
-	json.NewEncoder(w).Encode(pilotInfos)
+	pilotsInfo := model.GetAllPilotsInfo()
+	json.NewEncoder(w).Encode(pilotsInfo)
 }
 
 func GetAvailabilityHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	location := vars["location"]
 	depDateTime := utils.FormatTimeString(vars["depDateTime"])
-
 	returnDateTime := utils.FormatTimeString(vars["returnDateTime"])
+	pilotIds := model.GetAvailablePilot(location, depDateTime, returnDateTime)
+	json.NewEncoder(w).Encode(pilotIds)
+}
 
-	fmt.Println(location + depDateTime + returnDateTime)
+func GetFlightHandler(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	idNum, err := strconv.Atoi(id)
+	if err != nil {
+		log.Fatal(err)
+	}
+	flightInfo := model.GetFlightInfo(idNum)
+	json.NewEncoder(w).Encode(flightInfo)
+}
+
+func GetFlightsHandler(w http.ResponseWriter, r *http.Request) {
+	flightsInfo := model.GetAllFlightsInfo()
+	json.NewEncoder(w).Encode(flightsInfo)
 }
 
 func PostFlightHandler(w http.ResponseWriter, r *http.Request) {
@@ -52,5 +65,6 @@ func PostFlightHandler(w http.ResponseWriter, r *http.Request) {
 	pilotId := flightRequest.PilotID
 	depDateTime := utils.FormatTimeString(flightRequest.DepDateTime)
 	returnDateTime := utils.FormatTimeString(flightRequest.ReturnDateTime)
-	model.PostFlight(pilotId, depDateTime, returnDateTime)
+	flag := model.PostFlight(pilotId, depDateTime, returnDateTime)
+	json.NewEncoder(w).Encode(flag)
 }
