@@ -30,7 +30,7 @@ func StringToWeekday(weekdays []string) ([]time.Weekday, error) {
 	return timeWeekdays, err
 }
 
-func FormatTimeString(timeString string) (string) {
+func FormatTimeString(timeString string) string {
 	layout := "2006-01-02T15:04:05Z"
 	dateTime, err := time.Parse(layout, timeString)
 	if err != nil {

@@ -85,7 +85,7 @@ func GetPilotInfo(id int) PilotInfo {
 	}
 	statement, _ = database.Prepare("SELECT * FROM flights WHERE pilotID = ?")
 	rows, err = statement.Query(id)
-	if (err != nil) {
+	if err != nil {
 		log.Fatal(err)
 	}
 	for rows.Next() {
@@ -162,7 +162,7 @@ func GetFlightInfo(id int) []FlightInfo {
 func GetAllFlightsInfo() []FlightInfo {
 	database, _ := sql.Open("sqlite3", "./pilotInfo.db")
 	defer database.Close()
-	statement, _ := database.Prepare("SELECT * FROM pilots")
+	statement, _ := database.Prepare("SELECT * FROM flights")
 	rows, err := statement.Query()
 	if err != nil {
 		log.Fatal(err)
